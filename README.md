@@ -1,4 +1,4 @@
-# Visl AI Labs: Candidate Screening Platform
+# AI Candidate Screening Platform
 
 An AI-powered recruitment automation platform designed to evaluate candidates through intelligent resume parsing, repository-level GitHub analysis, and dynamic test scoring. Built for the Visl AI Labs Founding AI Engineer assignment.
 
