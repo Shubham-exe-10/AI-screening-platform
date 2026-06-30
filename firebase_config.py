@@ -4,6 +4,10 @@ from firebase_admin import credentials, firestore
 import streamlit as st
 from dotenv import load_dotenv
 
+# Force the environment variable for Google Cloud
+if "firebase" in st.secrets and "project_id" in st.secrets["firebase"]:
+    os.environ["GOOGLE_CLOUD_PROJECT"] = st.secrets["firebase"]["project_id"]
+
 # Load environment variables from .env file if it exists
 load_dotenv()
 
@@ -25,10 +29,8 @@ def init_firebase():
             if "private_key" in firebase_secrets:
                 firebase_secrets["private_key"] = firebase_secrets["private_key"].replace("\\n", "\n")
                 
-            # Explicitly set the environment variable and pass projectId option
-            os.environ["GOOGLE_CLOUD_PROJECT"] = firebase_secrets.get("project_id", "")
             cred = credentials.Certificate(firebase_secrets)
-            firebase_admin.initialize_app(cred, {'projectId': firebase_secrets.get('project_id')})
+            firebase_admin.initialize_app(cred)
         except Exception as e:
             # Fallback to local default / environment configuration
             try:
@@ -38,12 +40,7 @@ def init_firebase():
                 return None
 
     try:
-        proj_id = None
-        try:
-            proj_id = dict(st.secrets["firebase"]).get("project_id")
-        except Exception:
-            pass
-        db = firestore.client(project=proj_id)
+        db = firestore.client()
         return db
     except Exception as e:
         st.sidebar.warning(f"⚠️ Firestore Database client could not be initialized: {e}")
