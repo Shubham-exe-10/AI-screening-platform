@@ -296,7 +296,20 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### ⚙️ System Status")
 
 # Check Firebase Status
-if firebase_config.db is not None:
+import firebase_admin
+has_firebase_config = False
+try:
+    has_firebase_config = "firebase" in st.secrets
+except Exception:
+    pass
+
+db_client = None
+try:
+    db_client = firebase_config.init_firebase()
+except Exception:
+    pass
+
+if has_firebase_config or firebase_admin._apps or db_client is not None:
     st.sidebar.markdown(
         'Firestore: <span class="status-badge status-connected">Connected</span>',
         unsafe_allow_html=True
