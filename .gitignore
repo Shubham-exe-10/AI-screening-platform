@@ -1,0 +1,6 @@
+.streamlit/
+__pycache__/
+*.csv
+*.xlsx
+.env
+*.json
