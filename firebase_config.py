@@ -25,8 +25,10 @@ def init_firebase():
             if "private_key" in firebase_secrets:
                 firebase_secrets["private_key"] = firebase_secrets["private_key"].replace("\\n", "\n")
                 
+            # Explicitly set the environment variable and pass projectId option
+            os.environ["GOOGLE_CLOUD_PROJECT"] = firebase_secrets.get("project_id", "")
             cred = credentials.Certificate(firebase_secrets)
-            firebase_admin.initialize_app(cred)
+            firebase_admin.initialize_app(cred, {'projectId': firebase_secrets.get('project_id')})
         except Exception as e:
             # Fallback to local default / environment configuration
             try:
