@@ -105,8 +105,7 @@ def create_interview_event(service, candidate_name, candidate_email, start_time_
 
 # Set page configuration with a premium wide layout
 st.set_page_config(
-    page_title="myNachiketa | Candidate Screening Platform",
-    page_icon="💼",
+    page_title="AI Screening Platform",
     layout="wide",
     initial_sidebar_state="expanded"
 )
