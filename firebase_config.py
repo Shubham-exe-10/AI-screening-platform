@@ -38,7 +38,12 @@ def init_firebase():
                 return None
 
     try:
-        db = firestore.client()
+        proj_id = None
+        try:
+            proj_id = dict(st.secrets["firebase"]).get("project_id")
+        except Exception:
+            pass
+        db = firestore.client(project=proj_id)
         return db
     except Exception as e:
         st.sidebar.warning(f"⚠️ Firestore Database client could not be initialized: {e}")
