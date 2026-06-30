@@ -1,54 +1,50 @@
 import os
+import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-import streamlit as st
-from dotenv import load_dotenv
 
-# Force the environment variable for Google Cloud
-if "firebase" in st.secrets and "project_id" in st.secrets["firebase"]:
-    os.environ["GOOGLE_CLOUD_PROJECT"] = st.secrets["firebase"]["project_id"]
+@st.cache_resource
+def get_firestore_client():
+    # 1. Load secrets
+    firebase_secrets = dict(st.secrets["firebase"])
+    
+    # 2. Force environment variable
+    project_id = firebase_secrets.get("project_id")
+    if project_id:
+        os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
+        
+    # Format the private key to handle newline characters properly
+    if "private_key" in firebase_secrets:
+        firebase_secrets["private_key"] = firebase_secrets["private_key"].replace("\\n", "\n")
+        
+    # 3. Clear any zombie instances just in case
+    if firebase_admin._apps:
+        for app in list(firebase_admin._apps.keys()):
+            firebase_admin.delete_app(firebase_admin.get_app(app))
+            
+    # 4. Initialize fresh
+    cred = credentials.Certificate(firebase_secrets)
+    firebase_admin.initialize_app(cred, {
+        'projectId': project_id
+    })
+    
+    return firestore.client()
 
-# Load environment variables from .env file if it exists
-load_dotenv()
-
-# Global database client
-db = None
+# Call the cached function to get the database client
+try:
+    db = get_firestore_client()
+except Exception as e:
+    st.sidebar.warning(f"⚠️ Firebase initialization failed: {e}")
+    db = None
 
 def init_firebase():
     """
-    Initializes the Firebase Admin SDK from Streamlit secrets.
+    Compatibility wrapper returning the database client.
     """
     global db
-    
-    if not firebase_admin._apps:
+    if db is None:
         try:
-            # Directly read firebase config dict from Streamlit secrets
-            firebase_secrets = dict(st.secrets["firebase"])
-            
-            # Format the private key to handle newline characters properly
-            if "private_key" in firebase_secrets:
-                firebase_secrets["private_key"] = firebase_secrets["private_key"].replace("\\n", "\n")
-                
-            cred = credentials.Certificate(firebase_secrets)
-            firebase_admin.initialize_app(cred)
-        except Exception as e:
-            # Fallback to local default / environment configuration
-            try:
-                firebase_admin.initialize_app()
-            except Exception as ex:
-                st.sidebar.warning(f"⚠️ Firebase credentials not configured or initialization failed: {e}")
-                return None
-
-    try:
-        db = firestore.client()
-        return db
-    except Exception as e:
-        st.sidebar.warning(f"⚠️ Firestore Database client could not be initialized: {e}")
-        db = None
-        return None
-
-# Trigger initialization on module import
-try:
-    init_firebase()
-except Exception as e:
-    pass
+            db = get_firestore_client()
+        except Exception:
+            pass
+    return db
